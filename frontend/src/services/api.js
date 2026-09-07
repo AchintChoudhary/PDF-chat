@@ -6,19 +6,39 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Attach JWT token from localStorage to authorization header
+// Attach JWT token
 api.interceptors.request.use(
   (config) => {
     const userInfo = localStorage.getItem('userInfo');
+
     if (userInfo) {
-      const { token } = JSON.parse(userInfo);
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      try {
+        const { token } = JSON.parse(userInfo);
+
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.error('Invalid userInfo in localStorage:', error);
       }
     }
+
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Normalize API errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error(
+      'API Error:',
+      error.response?.data || error.message
+    );
+
+    return Promise.reject(error);
+  }
 );
 
 export default api;

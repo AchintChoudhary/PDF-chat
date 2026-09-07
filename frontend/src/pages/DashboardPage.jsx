@@ -21,22 +21,38 @@ const DashboardPage = () => {
     fetchDocuments();
   }, []);
 
-  const fetchDocuments = async () => {
-    setLoadingDocs(true);
-    try {
-      const { data } = await api.get('/documents');
-      setDocuments(data || []);
-      
-      // Auto select first document if viewer panel is closed
-      if (data && data.length > 0 && !activePdfDoc) {
-        setActivePdfDoc(data[0]);
-      }
-    } catch (err) {
-      console.error('Failed to fetch user documents:', err);
-    } finally {
-      setLoadingDocs(false);
-    }
-  };
+const fetchDocuments = async () => {
+  setLoadingDocs(true);
+
+  try {
+    const response = await api.get('/documents');
+
+    const responseData = response?.data;
+
+    // Support all common response formats:
+    // []
+    // { data: [] }
+    // { documents: [] }
+    const docs = Array.isArray(responseData)
+      ? responseData
+      : Array.isArray(responseData?.data)
+        ? responseData.data
+        : Array.isArray(responseData?.documents)
+          ? responseData.documents
+          : [];
+
+    setDocuments(docs);
+  } catch (err) {
+    console.error(
+      'Failed to load documents:',
+      err.response?.data || err.message
+    );
+
+    setDocuments([]);
+  } finally {
+    setLoadingDocs(false);
+  }
+};
 
   const handleJumpToPage = (pageNumber, filename) => {
     let targetDoc = activePdfDoc;

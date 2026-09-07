@@ -1,55 +1,44 @@
 import fs from 'fs';
-import pdfParse from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 
 /**
- * Parses PDF buffer/file into array of page contents with page numbers.
- * @param {string} filePath - Absolute path to PDF file
- * @returns {Promise<{pageCount: number, pages: Array<{pageNumber: number, text: string}>}>}
+ * Extract text from a PDF page by page.
  */
 export const extractPdfTextPages = async (filePath) => {
-  const dataBuffer = fs.readFileSync(filePath);
-
-  const pages = [];
-  
-  // Custom pager render to track exact page numbers
-  const options = {
-    pagerender: (pageData) => {
-      return pageData.getTextContent().then((textContent) => {
-        let lastY, text = '';
-        for (let item of textContent.items) {
-          if (lastY == item.transform[5] || !lastY) {
-            text += item.str;
-          } else {
-            text += '\n' + item.str;
-          }
-          lastY = item.transform[5];
-        }
-        pages.push({
-          pageNumber: pages.length + 1,
-          text: text.trim(),
-        });
-        return text;
-      });
-    },
-  };
-
-  const parsed = await pdfParse(dataBuffer, options);
-
-  // Fallback if pages array is empty
-  if (pages.length === 0 && parsed.text) {
-    const rawPages = parsed.text.split(/\n\s*\n/);
-    rawPages.forEach((text, idx) => {
-      if (text.trim()) {
-        pages.push({
-          pageNumber: idx + 1,
-          text: text.trim(),
-        });
-      }
-    });
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`PDF file not found: ${filePath}`);
   }
 
-  return {
-    pageCount: parsed.numpages || pages.length || 1,
-    pages: pages.length > 0 ? pages : [{ pageNumber: 1, text: parsed.text }],
-  };
+  const buffer = fs.readFileSync(filePath);
+
+  const parser = new PDFParse({
+    data: buffer,
+  });
+
+  try {
+    const result = await parser.getText();
+
+    const text = result.text || '';
+
+    // pdf-parse v2 does not expose page text in exactly
+    // the same format as the old version, so split using
+    // form-feed page separators when available.
+    const pageTexts = text.split('\f');
+
+    const pages = pageTexts.map((pageText, index) => ({
+      pageNumber: index + 1,
+      text: pageText.trim(),
+    }));
+
+    const nonEmptyPages = pages.filter(
+      (page) => page.text.length > 0
+    );
+
+    return {
+      pageCount: result.total || nonEmptyPages.length,
+      pages: nonEmptyPages,
+    };
+  } finally {
+    await parser.destroy();
+  }
 };

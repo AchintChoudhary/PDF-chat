@@ -31,36 +31,53 @@ const ChatWindow = ({ onSelectSource, documents = [], onJumpToPage }) => {
     scrollToBottom();
   }, [messages, loading]);
 
-  const fetchHistory = async () => {
-    setFetchingHistory(true);
-    try {
-      const { data } = await api.get('/history');
-      if (data && data.length > 0) {
-        const formatted = data.flatMap((item) => [
-          {
-            id: `${item._id}-q`,
-            role: 'user',
-            content: item.question,
-            createdAt: item.createdAt,
-          },
-          {
-            id: `${item._id}-a`,
-            role: 'assistant',
-            content: item.answer,
-            sources: item.sources,
-            createdAt: item.createdAt,
-          },
-        ]);
-        setMessages(formatted);
-      } else {
-        setMessages([]);
-      }
-    } catch (err) {
-      console.error('Failed to load chat history:', err);
-    } finally {
-      setFetchingHistory(false);
-    }
-  };
+ const fetchHistory = async () => {
+  setFetchingHistory(true);
+
+  try {
+    const response = await api.get('/history');
+
+    // Backend normally returns an array.
+    // Also support { data: [...] } and { history: [...] }.
+    const responseData = response?.data;
+
+    const history = Array.isArray(responseData)
+      ? responseData
+      : Array.isArray(responseData?.data)
+        ? responseData.data
+        : Array.isArray(responseData?.history)
+          ? responseData.history
+          : [];
+
+    const formatted = history.flatMap((item) => [
+      {
+        id: `${item._id}-q`,
+        role: 'user',
+        content: item.question || '',
+        createdAt: item.createdAt,
+      },
+      {
+        id: `${item._id}-a`,
+        role: 'assistant',
+        content: item.answer || '',
+        sources: Array.isArray(item.sources) ? item.sources : [],
+        createdAt: item.createdAt,
+      },
+    ]);
+
+    setMessages(formatted);
+  } catch (err) {
+    console.error(
+      'Failed to load chat history:',
+      err.response?.data || err.message
+    );
+
+    // Don't crash the application if history fails.
+    setMessages([]);
+  } finally {
+    setFetchingHistory(false);
+  }
+};
 
   const handleClearHistory = async () => {
     if (window.confirm('Clear all conversation history?')) {

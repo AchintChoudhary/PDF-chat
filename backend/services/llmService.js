@@ -1,16 +1,28 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+/**
+ * DocuMind RAG LLM service
+ *
+ * Uses OpenRouter FREE Models Router.
+ * No Gemini API is used.
+ */
+
+const OPENROUTER_LLM_MODEL = 'openrouter/free';
 
 /**
- * Generates grounded RAG response using Google Gemini API or intelligent context synthesis fallback.
- * @param {string} question - User question
- * @param {Array<{chunk: Object, score: number}>} searchResults - Top matching retrieved chunks
- * @param {Array<{role: string, content: string}>} [history] - Previous chat turns
- * @returns {Promise<{answer: string, sources: Array<{pageNumber: number, chunkText: string, filename: string, score: number}>}>}
+ * Generates grounded RAG response.
+ *
+ * @param {string} question
+ * @param {Array<{chunk: Object, score: number}>} searchResults
+ * @param {Array<{role: string, content: string}>} history
  */
-export const generateRAGResponse = async (question, searchResults, history = []) => {
+export const generateRAGResponse = async (
+  question,
+  searchResults,
+  history = []
+) => {
   if (!searchResults || searchResults.length === 0) {
     return {
-      answer: "I couldn't find any relevant uploaded document content to answer your question. Please upload a PDF document first.",
+      answer:
+        "I couldn't find any relevant uploaded document content to answer your question. Please upload a PDF document first.",
       sources: [],
     };
   }
@@ -23,54 +35,125 @@ export const generateRAGResponse = async (question, searchResults, history = [])
   }));
 
   const contextBlock = searchResults
-    .map(({ chunk }, idx) => `[Source ${idx + 1}: ${chunk.filename}, Page ${chunk.pageNumber}]\n${chunk.text}`)
+    .map(
+      ({ chunk }, idx) =>
+        `[Source ${idx + 1}: ${chunk.filename}, Page ${chunk.pageNumber}]\n${chunk.text}`
+    )
     .join('\n\n---\n\n');
 
   let historyBlock = '';
+
   if (history && history.length > 0) {
-    const recentHistory = history.slice(-6); // Take up to last 6 turns
-    historyBlock = `RECENT CONVERSATION HISTORY:\n` + recentHistory.map((h) => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`).join('\n') + '\n\n---\n\n';
+    const recentHistory = history.slice(-6);
+
+    historyBlock =
+      `RECENT CONVERSATION HISTORY:\n` +
+      recentHistory
+        .map(
+          (h) =>
+            `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`
+        )
+        .join('\n') +
+      '\n\n---\n\n';
   }
 
-  const systemInstruction = `You are an expert AI Document Assistant (DocuMind RAG). 
-Answer the user's question accurately based strictly on the provided Context excerpts below.
-Follow these rules:
-1. Ground your answer in the provided Context excerpts.
-2. Include exact page citations like [Page X] or [Page X, File Y] when referencing specific information.
-3. If the context does not contain enough information to answer the question completely, clearly state what information is available and what is missing.
-4. Keep your answer clear, well-structured, professional, and easy to read using markdown formatting.`;
+  const systemInstruction = `
+You are an expert AI Document Assistant called DocuMind.
 
-  const prompt = `${systemInstruction}\n\n${historyBlock}CONTEXT EXCERPTS:\n${contextBlock}\n\nUSER QUESTION:\n${question}\n\nPROVIDE GROUNDED ANSWER WITH [Page X] CITATIONS:`;
+Answer the user's question strictly using the provided document context.
 
-  const apiKey = process.env.GEMINI_API_KEY;
+Rules:
 
-  if (apiKey && apiKey !== 'your_gemini_api_key_here') {
-    try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
+1. Use the provided document context as the primary source of truth.
+2. Do not invent facts that are not present in the context.
+3. Include page citations such as [Page 3] whenever referring to information from a document.
+4. If multiple files are involved, use [Page X, File Y].
+5. If the context does not contain enough information, clearly say so.
+6. Do not pretend to know information that is missing from the documents.
+7. Give a clear, professional answer.
+8. Use Markdown when useful.
+9. Answer the user's actual question directly.
+`;
 
-      if (text) {
-        return {
-          answer: text,
-          sources,
-        };
+  const prompt = `
+${systemInstruction}
+
+${historyBlock}
+
+DOCUMENT CONTEXT:
+${contextBlock}
+
+USER QUESTION:
+${question}
+
+Provide a grounded answer with page citations.
+`;
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+
+  if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
+    throw new Error(
+      'OPENROUTER_API_KEY is missing. Add your OpenRouter API key to backend/.env'
+    );
+  }
+
+  try {
+    const response = await fetch(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+
+          // Optional OpenRouter metadata
+          'HTTP-Referer': 'http://localhost:5173',
+          'X-Title': 'DocuMind PDF Chat',
+        },
+        body: JSON.stringify({
+          model: OPENROUTER_LLM_MODEL,
+
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+
+          temperature: 0.2,
+          max_tokens: 1200,
+        }),
       }
-    } catch (err) {
-      console.warn('Gemini API call error, using context extraction response generator:', err.message);
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+
+      throw new Error(
+        `OpenRouter LLM error (${response.status}): ${errorText}`
+      );
     }
+
+    const data = await response.json();
+
+    const text =
+      data?.choices?.[0]?.message?.content?.trim();
+
+    if (!text) {
+      throw new Error(
+        'OpenRouter returned an empty response.'
+      );
+    }
+
+    return {
+      answer: text,
+      sources,
+    };
+  } catch (error) {
+    console.error('OpenRouter API error:', error);
+
+    throw new Error(
+      `AI response generation failed: ${error.message}`
+    );
   }
-
-  const topPassages = searchResults.slice(0, 3);
-  const synthesizedLines = topPassages.map(
-    ({ chunk }) => `• According to **${chunk.filename}** ([Page ${chunk.pageNumber}]):\n> "${chunk.text.substring(0, 300)}..."`
-  );
-
-  const fallbackAnswer = `Here is the relevant information found in your document regarding **"${question}"**:\n\n${synthesizedLines.join('\n\n')}\n\n*(Note: Provide a valid \`GEMINI_API_KEY\` in backend \`.env\` for dynamic LLM response generation).*`;
-
-  return {
-    answer: fallbackAnswer,
-    sources,
-  };
 };
