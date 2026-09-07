@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -8,12 +10,14 @@ const bucket =
   process.env.SUPABASE_BUCKET || 'pdfs';
 
 if (!supabaseUrl) {
-  throw new Error('SUPABASE_URL is missing');
+  throw new Error(
+    'SUPABASE_URL is missing. Check backend/.env'
+  );
 }
 
 if (!supabaseServiceRoleKey) {
   throw new Error(
-    'SUPABASE_SERVICE_ROLE_KEY is missing'
+    'SUPABASE_SERVICE_ROLE_KEY is missing. Check backend/.env'
   );
 }
 
@@ -28,9 +32,10 @@ const supabase = createClient(
   }
 );
 
-/**
- * Upload PDF to Supabase Storage.
- */
+// -------------------------
+// Upload PDF
+// -------------------------
+
 export const uploadPdf = async ({
   buffer,
   filename,
@@ -40,8 +45,14 @@ export const uploadPdf = async ({
     throw new Error('PDF buffer is required');
   }
 
-  const safeFilename = filename
-    .replace(/[^a-zA-Z0-9._-]/g, '_');
+  if (!filename) {
+    throw new Error('PDF filename is required');
+  }
+
+  const safeFilename = filename.replace(
+    /[^a-zA-Z0-9._-]/g,
+    '_'
+  );
 
   const storagePath =
     `${userId}/${Date.now()}-${safeFilename}`;
@@ -65,9 +76,10 @@ export const uploadPdf = async ({
   };
 };
 
-/**
- * Delete PDF from Supabase Storage.
- */
+// -------------------------
+// Delete PDF
+// -------------------------
+
 export const deletePdf = async (storagePath) => {
   if (!storagePath) return;
 
@@ -83,9 +95,10 @@ export const deletePdf = async (storagePath) => {
   }
 };
 
-/**
- * Download PDF from Supabase Storage.
- */
+// -------------------------
+// Download PDF
+// -------------------------
+
 export const downloadPdf = async (storagePath) => {
   if (!storagePath) {
     throw new Error('Storage path is required');
@@ -106,13 +119,18 @@ export const downloadPdf = async (storagePath) => {
   );
 };
 
-/**
- * Create a temporary signed URL.
- */
+// -------------------------
+// Signed PDF URL
+// -------------------------
+
 export const createSignedPdfUrl = async (
   storagePath,
   expiresIn = 3600
 ) => {
+  if (!storagePath) {
+    throw new Error('Storage path is required');
+  }
+
   const { data, error } = await supabase.storage
     .from(bucket)
     .createSignedUrl(

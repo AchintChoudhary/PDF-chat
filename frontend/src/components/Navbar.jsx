@@ -30,12 +30,12 @@ const Navbar = () => {
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-lg font-extrabold tracking-tight text-white">DocuMind</span>
+              <span className="text-lg font-extrabold tracking-tight text-white">PDF Insight Chat</span>
               <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-400 border border-blue-500/20">
                 MERN + RAG
               </span>
             </div>
-            <p className="text-[11px] text-gray-400">Intelligent PDF Vector Question Answering</p>
+            <p className="text-[11px] text-gray-400">Intelligent PDF Question Answering</p>
           </div>
         </div>
 
