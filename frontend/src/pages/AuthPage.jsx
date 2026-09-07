@@ -40,7 +40,7 @@ const AuthPage = () => {
             <Cpu className="h-7 w-7 text-white" />
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            DocuMind RAG System
+            PDF Insight Chat
           </h1>
           <p className="mt-2 text-xs text-gray-400">
             Sign in to upload PDFs, extract embeddings, and chat with vector intelligence.
