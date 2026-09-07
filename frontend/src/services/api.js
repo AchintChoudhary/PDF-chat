@@ -1,26 +1,20 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Attach JWT token
 api.interceptors.request.use(
   (config) => {
-    const userInfo = localStorage.getItem('userInfo');
+    const token = localStorage.getItem('token');
 
-    if (userInfo) {
-      try {
-        const { token } = JSON.parse(userInfo);
-
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      } catch (error) {
-        console.error('Invalid userInfo in localStorage:', error);
-      }
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     return config;
@@ -28,7 +22,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Normalize API errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
