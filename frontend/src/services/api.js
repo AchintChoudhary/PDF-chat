@@ -9,12 +9,25 @@ const api = axios.create({
   },
 });
 
+// Automatically attach JWT token to every request
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const userInfo = localStorage.getItem('userInfo');
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (userInfo) {
+      try {
+        const user = JSON.parse(userInfo);
+
+        // Support common token property names
+        const token = user.token || user.accessToken;
+
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.error('Invalid userInfo in localStorage:', error);
+        localStorage.removeItem('userInfo');
+      }
     }
 
     return config;
@@ -22,9 +35,17 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Handle unauthorized responses
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.status === 401) {
+      console.warn('Authentication required');
+
+      // Don't immediately delete userInfo here.
+      // The AuthContext controls logout/session state.
+    }
+
     console.error(
       'API Error:',
       error.response?.data || error.message
