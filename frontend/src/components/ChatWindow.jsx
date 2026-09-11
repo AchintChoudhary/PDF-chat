@@ -143,29 +143,29 @@ const ChatWindow = ({ onSelectSource, documents = [], onJumpToPage }) => {
   };
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-gray-800 bg-[#0f172a]/60 backdrop-blur-lg overflow-hidden glass-panel">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-800 bg-[#0f172a]/60 backdrop-blur-lg glass-panel">
       
       {/* Header Bar */}
-      <div className="flex flex-wrap items-center justify-between border-b border-gray-800 bg-gray-900/60 px-5 py-3 gap-2">
-        <div className="flex items-center space-x-2.5">
+      <div className="flex flex-col items-stretch justify-between gap-3 border-b border-gray-800 bg-gray-900/60 px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2 sm:px-5">
+        <div className="flex min-w-0 items-center space-x-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
             <Bot className="h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">RAG Intelligence Chat</h3>
-            <p className="text-[10px] text-gray-400">Vector Search • Multi-Turn Memory • Page Citations</p>
+            <h3 className="truncate text-xs font-bold uppercase tracking-wider text-white">RAG Intelligence Chat</h3>
+            <p className="truncate text-[10px] text-gray-400">Vector Search • Multi-Turn Memory • Page Citations</p>
           </div>
         </div>
 
         {/* Document Scope Filter & Controls */}
-        <div className="flex items-center space-x-3">
+        <div className="flex min-w-0 items-center justify-between gap-2 sm:space-x-3">
           {hasDocuments && (
             <div className="flex items-center space-x-1.5 rounded-xl border border-gray-800 bg-gray-950/70 px-2.5 py-1 text-xs text-gray-300">
               <Filter className="h-3.5 w-3.5 text-purple-400" />
               <select
                 value={selectedDocId}
                 onChange={(e) => setSelectedDocId(e.target.value)}
-                className="bg-transparent text-xs text-gray-200 focus:outline-none cursor-pointer font-medium max-w-[150px] truncate"
+                className="min-w-0 max-w-[calc(100vw-7rem)] cursor-pointer truncate bg-transparent text-xs font-medium text-gray-200 focus:outline-none sm:max-w-[150px]"
               >
                 <option value="all" className="bg-gray-900 text-gray-200">🔍 Search All Documents</option>
                 {documents.map((doc) => (
@@ -191,7 +191,7 @@ const ChatWindow = ({ onSelectSource, documents = [], onJumpToPage }) => {
       </div>
 
       {/* Messages Thread */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3 sm:p-4">
         {fetchingHistory ? (
           <div className="flex h-full flex-col items-center justify-center text-gray-400">
             <Loader2 className="h-6 w-6 animate-spin text-blue-400 mb-2" />
@@ -199,9 +199,7 @@ const ChatWindow = ({ onSelectSource, documents = [], onJumpToPage }) => {
           </div>
         ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600/20 to-purple-600/20 border border-blue-500/30 text-blue-400 shadow-xl">
-              <Sparkles className="h-7 w-7" />
-            </div>
+            
             <h3 className="text-base font-bold text-white">Ask Anything About Your Documents</h3>
             <p className="mt-1 max-w-md text-xs text-gray-400">
               Upload a PDF on the left panel, then ask questions. The system retrieves relevant vector chunks and generates grounded answers with clickable page citations.
@@ -240,7 +238,7 @@ const ChatWindow = ({ onSelectSource, documents = [], onJumpToPage }) => {
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-400">
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
-            <div className="rounded-2xl border border-gray-800 bg-gray-900/80 px-4 py-3 text-xs text-gray-400 glass-panel">
+            <div className="max-w-[calc(100%-3rem)] rounded-2xl border border-gray-800 bg-gray-900/80 px-4 py-3 text-xs text-gray-400 glass-panel">
               Searching vector embeddings & generating grounded response...
             </div>
           </div>
@@ -250,15 +248,15 @@ const ChatWindow = ({ onSelectSource, documents = [], onJumpToPage }) => {
       </div>
 
       {/* Input Box */}
-      <div className="border-t border-gray-800 bg-gray-900/70 p-4">
-        <form onSubmit={(e) => handleSubmit(e)} className="flex items-center space-x-2">
+      <div className="border-t border-gray-800 bg-gray-900/70 p-3 sm:p-4">
+        <form onSubmit={(e) => handleSubmit(e)} className="flex min-w-0 items-center space-x-2">
           <input
             type="text"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder={hasDocuments ? "Ask a question about your uploaded PDF..." : "Please upload a PDF first to begin chatting..."}
             disabled={loading}
-            className="flex-1 rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="min-w-0 flex-1 rounded-xl border border-gray-800 bg-gray-950 px-3 py-3 text-sm text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:px-4"
           />
           <button
             type="submit"

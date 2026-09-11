@@ -13,7 +13,7 @@ const ChatMessage = ({ message, onSelectSource, onJumpToPage }) => {
   };
 
   return (
-    <div className={`flex w-full space-x-3 p-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex min-w-0 w-full space-x-2 p-2 sm:space-x-3 sm:p-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
       
       {/* Bot Avatar */}
       {!isUser && (
@@ -23,7 +23,7 @@ const ChatMessage = ({ message, onSelectSource, onJumpToPage }) => {
       )}
 
       {/* Message Content Box */}
-      <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 shadow-sm relative group ${
+      <div className={`min-w-0 max-w-[calc(100%-2.75rem)] rounded-2xl p-3 shadow-sm relative group sm:max-w-[75%] sm:p-4 ${
         isUser
           ? 'bg-blue-600 text-white rounded-br-none'
           : 'border border-gray-800 bg-gray-900/80 text-gray-200 rounded-bl-none glass-panel'
@@ -62,7 +62,7 @@ const ChatMessage = ({ message, onSelectSource, onJumpToPage }) => {
         {/* Source Citations Badges */}
         {!isUser && message.sources && message.sources.length > 0 && (
           <div className="mt-4 border-t border-gray-800/80 pt-3">
-            <div className="mb-2 flex items-center space-x-1.5 text-xs font-semibold text-gray-400">
+            <div className="mb-2 flex items-start space-x-1.5 text-xs font-semibold text-gray-400">
               <Sparkles className="h-3.5 w-3.5 text-blue-400" />
               <span>Retrieved Grounded Sources (Click to Jump PDF):</span>
             </div>

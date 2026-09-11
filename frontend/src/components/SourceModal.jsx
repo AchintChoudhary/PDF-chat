@@ -6,7 +6,7 @@ const SourceModal = ({ source, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl rounded-2xl border border-gray-800 bg-[#111827] p-6 shadow-2xl">
+      <div className="relative max-h-[calc(100vh-2rem)] w-full max-w-xl overflow-y-auto rounded-2xl border border-gray-800 bg-[#111827] p-4 shadow-2xl sm:p-6">
         
         {/* Header */}
         <div className="flex items-start justify-between border-b border-gray-800 pb-4">

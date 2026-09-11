@@ -80,24 +80,24 @@ const fetchDocuments = async () => {
   };
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
       
       {/* Top Knowledge Overview Bar */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-800 bg-gray-900/50 p-4 backdrop-blur-md glass-panel">
-        <div className="flex items-center space-x-3">
+      <div className="mb-4 flex flex-col items-stretch justify-between gap-3 rounded-2xl border border-gray-800 bg-gray-900/50 p-3 backdrop-blur-md glass-panel sm:mb-6 sm:flex-row sm:items-center sm:gap-4 sm:p-4">
+        <div className="flex min-w-0 items-center space-x-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
             <Layers className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white">Document Knowledge Base</h2>
-            <p className="text-xs text-gray-400">
+            <h2 className="truncate text-sm font-bold text-white">Document Knowledge Base</h2>
+            <p className="text-xs leading-5 text-gray-400">
               {documents.length} PDF Document{documents.length === 1 ? '' : 's'} Indexed •{' '}
               {documents.reduce((sum, d) => sum + (d.chunkCount || 0), 0)} Vector Chunks Active
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-2 sm:space-x-3">
           {documents.length > 0 && (
             <button
               onClick={() => setShowPdfPanel(!showPdfPanel)}
@@ -120,15 +120,15 @@ const fetchDocuments = async () => {
       </div>
 
       {/* Grid Workspace Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-14rem)] min-h-[600px]">
+      <div className="grid min-h-0 grid-cols-1 gap-4 lg:h-[calc(100vh-14rem)] lg:min-h-[600px] lg:grid-cols-12 lg:gap-6">
         
         {/* Left Column: PDF Upload & Document Library (3 cols when PDF viewer is open, 4 cols when closed) */}
-        <div className={`${showPdfPanel ? 'lg:col-span-3' : 'lg:col-span-4'} flex flex-col space-y-6 overflow-y-auto pr-1 transition-all duration-300`}>
+        <div className={`${showPdfPanel ? 'lg:col-span-3' : 'lg:col-span-4'} order-2 flex min-w-0 flex-col space-y-4 overflow-visible pr-0 transition-all duration-300 lg:order-1 lg:space-y-6 lg:overflow-y-auto lg:pr-1`}>
           <div className="rounded-2xl border border-gray-800 bg-gray-900/60 p-4 glass-panel">
             <DocumentUpload onUploadSuccess={fetchDocuments} />
           </div>
 
-          <div className="flex-1 rounded-2xl border border-gray-800 bg-gray-900/60 p-4 glass-panel">
+          <div className="flex-1 rounded-2xl border border-gray-800 bg-gray-900/60 p-3 glass-panel sm:p-4">
             <DocumentList
               documents={documents}
               loading={loadingDocs}
@@ -139,7 +139,7 @@ const fetchDocuments = async () => {
         </div>
 
         {/* Middle Column: RAG Vector Chat Thread (5 cols when PDF viewer open, 8 cols when closed) */}
-        <div className={`${showPdfPanel ? 'lg:col-span-5' : 'lg:col-span-8'} h-full transition-all duration-300`}>
+        <div className={`${showPdfPanel ? 'lg:col-span-5' : 'lg:col-span-8'} order-1 h-[70vh] min-h-[480px] min-w-0 transition-all duration-300 lg:order-2 lg:h-full lg:min-h-0`}>
           <ChatWindow
             onSelectSource={(src) => setActiveSource(src)}
             documents={documents}
@@ -149,7 +149,7 @@ const fetchDocuments = async () => {
 
         {/* Right Column: Interactive Side-by-Side PDF Viewer (4 cols) */}
         {showPdfPanel && (
-          <div className="lg:col-span-4 h-full animate-fadeIn transition-all duration-300">
+          <div className="order-3 h-[70vh] min-h-[500px] min-w-0 animate-fadeIn transition-all duration-300 lg:col-span-4 lg:h-full lg:min-h-0">
             <PdfViewerPanel
               document={activePdfDoc}
               initialPage={pdfPage}
